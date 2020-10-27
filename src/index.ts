@@ -387,6 +387,6 @@ export function withQuery<T extends Pick<Request, keyof Request>, S>(
 			}
 		}
 
-		return fn(req, res);
+		return fn(req as unknown as Omit<T, "query"> & { query: S }, res);
 	};
 }

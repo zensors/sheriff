@@ -1,0 +1,33 @@
+steps:
+  - label: ":mocha: Testing"
+    commands:
+      - "echo '--- Setting up'"
+      - "mkdir -p /test"
+      - "cp -R . /test"
+      - "cd /test"
+      - "echo '--- Installing Packages'"
+      - "yarn install"
+      - "echo '+++ Running Tests'"
+      - "yarn test"
+    plugins:
+      - docker#v3.7.0:
+          image: "node:lts"
+
+  - wait
+
+  - label: ":npm: Building and Publishing Module"
+    commands:
+      - "echo '--- Setting up'"
+      - "mkdir -p /build"
+      - "cp -R . /build"
+      - "cd /build"
+      - 'printf "npmScopes:\n  zensors\n    npmRegistryServer: https://zpm.admin.zensors.live\n    npmAlwaysAuth: true\n    npmAuthIdent: $NPM_AUTH" > /build/.yarnrc.yml'
+      - "echo '--- Installing Packages'"
+      - "yarn install"
+      - "echo '+++ Publishing'"
+      - "yarn publish"
+    plugins:
+      - docker#v3.7.0:
+          image: "node:lts"
+          propagate-environment: true
+    if: build.branch == "master"
