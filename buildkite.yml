@@ -21,7 +21,7 @@ steps:
       - "mkdir -p /build"
       - "cp -R . /build"
       - "cd /build"
-      - 'printf "npmScopes:\n  zensors:\n    npmRegistryServer: https://zpm.admin.zensors.live\n    npmAlwaysAuth: true\n    npmAuthIdent: $NPM_AUTH" > /build/.yarnrc.yml'
+      - 'printf "npmScopes:\n  zensors:\n    npmRegistryServer: https://zpm.admin.zensors.live\n    npmAlwaysAuth: true\n    npmAuthToken: $NPM_TOKEN" > /build/.yarnrc.yml'
       - "echo '--- Installing Packages'"
       - "yarn install"
       - "echo '+++ Publishing'"
