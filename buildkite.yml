@@ -21,7 +21,9 @@ steps:
       - "mkdir -p /build"
       - "cp -R . /build"
       - "cd /build"
-      - 'printf "npmScopes:\n  zensors:\n    npmRegistryServer: https://zpm.admin.zensors.live\n    npmAlwaysAuth: true\n    npmAuthToken: $NPM_TOKEN" > /build/.yarnrc.yml'
+      - "echo 'always-auth=true' >> ~/.npmrc"
+      - "echo '@zensors:registry=https://zpm.admin.zensors.live/' >> ~/.npmrc"
+      - 'echo "//zpm.admin.zensors.live/:_authToken=\"$NPM_TOKEN\"" >> ~/.npmrc'
       - "echo '--- Installing Packages'"
       - "yarn install"
       - "echo '+++ Publishing'"
