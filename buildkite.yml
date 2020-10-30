@@ -28,6 +28,7 @@ steps:
       - "yarn install"
       - "echo '+++ Publishing'"
       - "yarn publish"
+      - "ls dist"
     plugins:
       - docker#v3.7.0:
           image: "node:lts"
