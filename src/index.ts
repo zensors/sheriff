@@ -1,5 +1,4 @@
 import type { Request, Response } from "express";
-import * as util from "util";
 
 function unreachable(arg: never) {
 	throw new Error(`Got to unreachable location with value: ${arg}`);
@@ -273,8 +272,7 @@ export function marshal<T>(
 			} else {
 				assertHere(
 					false,
-					`Unable to match against union.`
-						+ ` Provided ${util.inspect(obj)} but expected one of [${description.types.map(({ kind }) => kind).join(" | ")}]`
+					`Unable to match against union. Expected one of [${description.types.map(({ kind }) => kind).join(" | ")}]`
 				);
 			}
 
@@ -293,7 +291,7 @@ export function marshal<T>(
 
 		case "logically-verified": {
 			marshal(obj, description.spec, path);
-			assertHere(description.fn(obj), `Failed user verification on: ${util.inspect(obj)}`);
+			assertHere(description.fn(obj), "Failed user verification.");
 			break;
 		}
 
