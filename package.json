@@ -7,7 +7,7 @@
     "build": "tsc >&2",
     "watch": "tsc -w",
     "test": "TS_NODE_PROJECT=tsconfig.test.json mocha --require ts-node/register test/spec.ts",
-    "prepare": "yarn run build"
+    "prepack": "yarn run build"
   },
   "author": "Zensors Inc.",
   "license": "UNLICENSED",
