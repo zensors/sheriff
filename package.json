@@ -11,7 +11,6 @@
   },
   "author": "Zensors Inc.",
   "license": "UNLICENSED",
-  "dependencies": {},
   "devDependencies": {
     "@types/express": "^4.17.8",
     "@types/mocha": "^8.0.3",
