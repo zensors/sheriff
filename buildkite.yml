@@ -5,6 +5,7 @@ steps:
       - "mkdir -p /test"
       - "cp -R . /test"
       - "cd /test"
+      - "cp .yarnrc.ci.yml ~/.yarnrc.yml"
       - "echo '--- Installing Packages'"
       - "yarn install"
       - "echo '+++ Running Tests'"
@@ -12,6 +13,7 @@ steps:
     plugins:
       - docker#v3.7.0:
           image: "node:lts"
+          propagate-environment: true
 
   - wait
 
@@ -21,9 +23,7 @@ steps:
       - "mkdir -p /build"
       - "cp -R . /build"
       - "cd /build"
-      - "echo 'always-auth=true' >> ~/.npmrc"
-      - "echo '@zensors:registry=https://zpm.admin.zensors.live/' >> ~/.npmrc"
-      - 'echo "//zpm.admin.zensors.live/:_authToken=\"$NPM_TOKEN\"" >> ~/.npmrc'
+      - "cp .yarnrc.ci.yml ~/.yarnrc.yml"
       - "echo '--- Installing Packages'"
       - "yarn install"
       - "echo '+++ Publishing'"
