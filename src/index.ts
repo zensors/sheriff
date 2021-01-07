@@ -145,6 +145,7 @@ export function marshal<T>(
 
 		case "object": {
 			assertHere(typeof obj === "object", `Expected object, got ${typeof obj}`);
+			assertHere(obj !== null, `Expected object, got null`);
 			assertHere(!("__proto__" in obj) || obj.__proto__ === Object.prototype, `Found prototype pollution`);
 
 			const getUnionOrder = (m: MarshalUnion<unknown>) => (
