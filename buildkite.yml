@@ -27,7 +27,7 @@ steps:
       - "echo '--- Installing Packages'"
       - "yarn install"
       - "echo '+++ Publishing'"
-      - "yarn publish"
+      - "yarn npm publish"
     plugins:
       - docker#v3.7.0:
           image: "node:lts"
