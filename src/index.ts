@@ -4,8 +4,6 @@ function unreachable(arg: never) {
 	throw new Error(`Got to unreachable location with value: ${arg}`);
 }
 
-const PRIMITIVE_SYMBOL = Symbol("Dummy type");
-
 type RequiredKeys<T> = {
 	[K in keyof T]-?: unknown extends T[K] ? K : undefined extends T[K] ? never : K;
 }[keyof T];
@@ -23,19 +21,20 @@ export type MarshalObject<T> = {
 export type MarshalUnion<T> =
 	| {
 		kind: "string",
-		[PRIMITIVE_SYMBOL]: (T extends string ? T : never)
+		_primitive: (T extends string ? T : never)
 	}
 	| {
-		kind: "constant", value: T,
-		[PRIMITIVE_SYMBOL]: T
+		kind: "constant",
+		value: T,
+		_primitive: T
 	}
 	| {
 		kind: "boolean",
-		[PRIMITIVE_SYMBOL]: (T extends boolean ? T : never)
+		_primitive: (T extends boolean ? T : never)
 	}
 	| {
 		kind: "number",
-		[PRIMITIVE_SYMBOL]: (T extends number ? T : never)
+		_primitive: (T extends number ? T : never)
 	}
 	| (T extends (infer S)[]
 		? { kind: "array", type: MarshalUnion<S> }
