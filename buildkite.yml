@@ -7,7 +7,7 @@ steps:
       - "cd /test"
       - "cp .yarnrc.ci.yml ~/.yarnrc.yml"
       - "echo '--- Installing Packages'"
-      - "yarn install"
+      - "yarn install --immutable"
       - "echo '+++ Running Tests'"
       - "yarn test"
     plugins:
@@ -25,7 +25,7 @@ steps:
       - "cd /build"
       - "cp .yarnrc.ci.yml ~/.yarnrc.yml"
       - "echo '--- Installing Packages'"
-      - "yarn install"
+      - "yarn install --immutable"
       - "echo '+++ Publishing'"
       - "yarn npm publish"
     plugins:
