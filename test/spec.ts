@@ -1,6 +1,6 @@
 import { expect } from "chai";
 
-import { M, marshal, Marshaller } from "../src";
+import { M, marshal } from "../src";
 
 describe("@zensors/sheriff", () => {
 	describe("marshal", () => {

@@ -1,17 +1,16 @@
+/**
+ * A utility function for asserting that a check is exhaustive.
+ *
+ * @param _arg - the value whose checks we would like to assert were exhaustive
+ * @param message - a message to display if we somehow reach this position (generally due to unsafe runtime usage)
+ */
 function unreachable(_arg: never, message: string) {
 	throw new Error(message);
 }
 
-type RequiredKeys<T> = {
-	[K in keyof T]-?: unknown extends T[K] ? K : undefined extends T[K] ? never : K;
-}[keyof T];
-
-type NonRequiredKeys<T> = {
-	[K in keyof T]-?: unknown extends T[K] ? never : undefined extends T[K] ? K : never;
-}[keyof T];
-
-type KeyFix<T> = { [K in RequiredKeys<T>]: T[K] } & { [K in NonRequiredKeys<T>]?: T[K] };
-
+/**
+ * The type of a descriptor object that can be used to marshal values of type `T`.
+ */
 export type Marshaller<T> =
 	| { kind: "literal", value: T }
 	| (boolean extends T ? { kind: "boolean" } : never)
@@ -31,17 +30,56 @@ export type Marshaller<T> =
 		{ kind: "witness", type: Marshaller<T1> } : never : never)
 	;
 
+/**
+ * The type of an object whose fields describe the fields of an object to be marshalled.
+ *
+ * @see {M.obj}
+ */
 export type ObjectMarshaller<T> = { [K in keyof T]-?: Marshaller<T[K]> };
 
+/**
+ * The type of a tuple whose fields describe the fields of a tuple to be marshalled.
+ *
+ * @see {M.tup}
+ */
 export type TupleMarshaller<T extends any[]> = number extends T["length"] ? never : { [K in keyof T]: Marshaller<T[K]> };
 
+/**
+ * Converts a path within an object to a human-readable string.
+ *
+ * @param name - the name of the root object
+ * @param path - the list of keys within that object
+ */
 let pathStringify = (name: string, path: (string | number)[]): string =>
 	path.reduce<string>((agg, next) => typeof next === "string" ? `${agg}.${next}` : `${agg}[${next}]`, name);
 
+/**
+ * An error encountered while marshalling.  If you encounter one of these, the request that led to it should be
+ * rejected.
+ *
+ * A `MarshalError`'s message is intended to be human-readable and should not be considered safe for any particular
+ * purpose (e.g., don't serve it in an HTTP server without either encoding it first or setting an appropriate content
+ * type).
+ */
 export class MarshalError extends Error {
+	/**
+	 * The name of the root object whose marshalling resulted in this error.
+	 */
 	public name: string;
+
+	/**
+	 * The path within the object whose marshalling failed.
+	 */
 	public path: (string | number)[];
+
+	/**
+	 * A message describing why marshalling failed.
+	 */
 	public info: string;
+
+	/**
+	 * The type of rule that resulted in the marshalling failure.
+	 */
 	public rule: string;
 
 	constructor(name: string, path: (string | number)[], info: string, rule: string) {
@@ -55,6 +93,16 @@ export class MarshalError extends Error {
 	}
 }
 
+/**
+ * Ensures that `obj` ascribes to the type described by `description`, throwing an error if it deviates from that
+ * description.
+ *
+ * @param obj - the object to be marshalled
+ * @param description - the type description to check against
+ * @param name - the name used in errors to describe the root object
+ * @param path - the path from the root object to the current position
+ * @throws MarshalError - thrown when the object does not match the description
+ */
 export function marshal<T extends X, X = unknown>(
 	obj: X,
 	description: Marshaller<T>,
@@ -298,21 +346,90 @@ export function marshal<T extends X, X = unknown>(
 }
 
 export namespace M {
+	/**
+	 * Returns a marshaller for a literal value.  Note that validation is done with a triple-equals check, so this
+	 * should only be used for primitive values, and will result in validation errors if the two objects are not
+	 * identical.
+	 *
+	 * @param value - the value to match against
+	 */
 	export const lit = <T>(value: T): Marshaller<T> => ({ kind: "literal" as const, value });
+
+	/**
+	 * A marshaller accepting all booleans.
+	 */
 	export const bool: Marshaller<boolean> = { kind: "boolean" as const };
+
+	/**
+	 * A marshaller accepting all numbers.
+	 */
 	export const num: Marshaller<number> = { kind: "number" as const };
+
+	/**
+	 * A marshaller accepting all strings.
+	 */
 	export const str: Marshaller<string> = { kind: "string" as const };
+
+	/**
+	 * Returns a marshaller for an optional value of the given marshaller type.
+	 *
+	 * @param type - the base marshaller
+	 */
 	export const opt = <T>(type: Marshaller<T>) => ({ kind: "optional" as const, type }) as Marshaller<T | undefined>;
-	export const obj = <T>(ob: ObjectMarshaller<T>) => ({
+
+	/**
+	 * The keys that are required and do not accept `undefined` as a possible value in the given object type `T`.
+	 */
+	type RequiredKeys<T> = {
+		[K in keyof T]-?: unknown extends T[K] ? K : undefined extends T[K] ? never : K;
+	}[keyof T];
+
+	/**
+	 * The keys that either are not required or which accept `undefined` as a possible value in the given object type `T`.
+	 */
+	type NonRequiredKeys<T> = {
+		[K in keyof T]-?: unknown extends T[K] ? never : undefined extends T[K] ? K : never;
+	}[keyof T];
+
+	/**
+	 * The object type `T` with all possibly-`undefined` fields marked as optional.
+	 */
+	type Optionalize<T> = { [K in RequiredKeys<T>]: T[K] } & { [K in NonRequiredKeys<T>]?: T[K] };
+
+	/**
+	 * Returns a marshaller for an object with the specified field types.  Excess fields will be considered marshal
+	 * errors.  Missing fields will be considered marshal errors unless their marshaller accepts `undefined`.  (It is
+	 * not possible to specify a field that must exist but which may take `undefined` as a value.)
+	 *
+	 * @param fields - a mapping from fields names to marshallers that will be used to check those fields
+	 */
+	export const obj = <T>(fields: ObjectMarshaller<T>) => ({
 		kind: "object",
-		fields: ob
-	}) as Marshaller<KeyFix<T>>;
+		fields
+	}) as Marshaller<Optionalize<T>>;
+
+	/**
+	 * Returns a marshaller for an array of values of the specified type.
+	 *
+	 * @param type - a marshaller for the types of the elements in the array
+	 */
 	export const arr = <T>(type: Marshaller<T>): Marshaller<T[]> => ({ kind: "array" as const, type });
+
+	/**
+	 * Returns a marshaller for a tuple with the specified field types.
+	 *
+	 * @param types - marshallers for the individual fields of the tuple
+	 */
 	export const tup = <T extends any[]>(...types: TupleMarshaller<T>): Marshaller<T> => ({
 		kind: "tuple" as const,
 		fields: types
 	}) as Marshaller<T>;
 
+	/**
+	 * Returns a marshaller for a union of the given input types.
+	 *
+	 * @param types - marshallers for the constituent types of the tuple
+	 */
 	export function union<T1, T2>(t1: Marshaller<T1>, t2: Marshaller<T2>): Marshaller<T1 | T2>;
 	export function union<T1, T2, T3>(t1: Marshaller<T1>, t2: Marshaller<T2>, t3: Marshaller<T3>): Marshaller<T1 | T2 | T3>;
 	export function union<T1, T2, T3, T4>(t1: Marshaller<T1>, t2: Marshaller<T2>, t3: Marshaller<T3>, t4: Marshaller<T4>): Marshaller<T1 | T2 | T3 | T4>;
@@ -326,28 +443,87 @@ export namespace M {
 		return { kind: "union" as const, types };
 	}
 
+	/**
+	 * Returns a marshaller for a recursive type.
+	 *
+	 * @param f - a function that, given a `Marshaller<T>`, produces a `Marshaller<T>` one level shallower
+	 *
+	 * @description
+	 * To define a marshaller for a binary tree of numbers, you might use something like the following:
+	 *
+	 * ```ts
+	 * interface Tree {
+	 *     value: number;
+	 *     left?: Tree;
+	 *     right?: Tree;
+	 * }
+	 *
+	 * const TreeMarshaller: Marshaller<Tree> =
+	 *     M.rec((self) => M.obj({ value: M.num, left: M.opt(self), right: M.opt(self) }))
+	 * ```
+	 */
 	export const rec = <T>(f: (self: Marshaller<T>) => Marshaller<T>) => {
 		let parent = { kind: "recursive", self: undefined } as any;
 		parent.self = f(parent);
 		return parent as Marshaller<T>;
 	};
 
+	/**
+	 * A marshaller that maches any value, resulting in a value with type `any`.  Consider using `M.unk` instead.
+	 *
+	 * @see {M.unk}
+	 */
 	export const any: Marshaller<any> = { kind: "any" as const };
+
+	/**
+	 * A marshaller that matches any value, resulting in a value with type `unknown`.
+	 */
 	export const unk: Marshaller<unknown> = { kind: "unknown" as const };
 
+	/**
+	 * Returns a marshaller that marshals using the provided marshaller, and then does additional checks using the
+	 * provided function.  Note that the provided function should throw an error with an appropriate message if
+	 * validation fails.  Returning any value other than `undefined` from the validation error will result in a
+	 * marshalling error at usage time.
+	 *
+	 * @param type - the marshaller to use to marshal the value before passing it to the validation function
+	 * @param fn - the validation function; must throw an error if validation fails, and return `undefined` otherwise
+	 */
 	export const custom = <T>(type: Marshaller<T>, fn: (arg: T) => void): Marshaller<T> => ({
 		kind: "custom" as const,
 		type,
 		fn
 	});
 
+	/**
+	 * Returns a marshaller for an object with any keys whose values are all of the given marshaller type.
+	 *
+	 * @param type - a marshaller for the types of the values in the object
+	 */
 	export const record = <T>(type: Marshaller<T>): Marshaller<Record<string, T>> => ({ kind: "record", type });
 
+	/**
+	 * Returns a marshaller for an object and attaches a type witness to its type.  (In TypeScript, this is often
+	 * referred to as _branding_.)
+	 *
+	 * @param type - a marshaller for the type of the object, without the type witness
+	 */
 	export const witness = <T, U>(type: Marshaller<T>): Marshaller<T & {__typeWitness: U}> =>
 		({ kind: "witness", type }) as Marshaller<T & { __typeWitness: U }>;
 
+	/**
+	 * A marshaller accepting only `null`.
+	 */
 	export const nul = lit(null);
+
+	/**
+	 * A marshaller accepting only `undefined`.
+	 */
 	export const undef = lit(undefined);
+
+	/**
+	 * A marshaller accepting only integers.
+	 */
 	export const int = custom(M.num, (x) => {
 		if (!Number.isInteger(x)) {
 			throw new Error("Expected integer, got non-integer");
