@@ -341,7 +341,11 @@ export function marshal<T extends X, X = unknown>(
 			break;
 		}
 
-		default: unreachable(description, `Reached unexpected type description "${(description as any).kind}"`);
+		default:
+			unreachable(
+				description,
+				`Reached unexpected type description "${(description as any).kind}" at ${pathStringify(name, path)}`
+			);
 	}
 }
 
