@@ -230,7 +230,7 @@ app.get("/api/upload-dog", (req, res) => {
 });
 ```
 
-## Expedite
+### Expedite
 
 ```ts
 import { Router, marshalBody, marshalQuery } from "@zensors/expedite";
@@ -252,3 +252,11 @@ router.get("/api/upload-dog")
         return "Ok";
     })
 ```
+
+## Contributions
+
+Bug reports and feature requests can be submitted through the issues tab. Unfortunately, Sheriff is not accepting code contributions at this moment.
+
+## Credit
+
+This project is developed and maintained by [Zensors, Inc.](https://zensors.com).
