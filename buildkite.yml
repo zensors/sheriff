@@ -27,10 +27,10 @@ steps:
       - "echo '--- Installing Packages'"
       - "yarn install --immutable"
       - "echo '+++ Publishing Internally'"
-      - "yarn npm publish"
+      - "yarn npm publish --tolerate-republish"
       - "echo '+++ Publishing Externally'"
       - "cp .yarnrc.external.yml ~/.yarnrc.yml"
-      - "yarn npm publish"
+      - "yarn npm publish --tolerate-republish"
     plugins:
       - docker#v3.7.0:
           image: "node:lts"
@@ -40,5 +40,5 @@ steps:
   - label: ":github: Pushing to GitHub"
     commands:
       - "git remote add gh git@github.com:zensors/sheriff.git || true"
-      - "git push gh HEAD:${BUILDKITE_BRANCH}"
+      - "git push gh HEAD:/refs/heads/${BUILDKITE_BRANCH}"
     if: "build.branch !~ /^refs/"
