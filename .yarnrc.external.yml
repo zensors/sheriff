@@ -1,0 +1,5 @@
+npmScopes:
+  zensors:
+    npmAlwaysAuth: true
+    npmRegistryServer: "https://registry.npmjs.org/"
+    npmAuthToken: "${NPM_TOKEN}"

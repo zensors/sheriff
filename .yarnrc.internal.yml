@@ -2,4 +2,4 @@ npmScopes:
   zensors:
     npmAlwaysAuth: true
     npmRegistryServer: "https://zpm.admin.zensors.live/"
-    npmAuthToken: "${NPM_TOKEN}"
+    npmAuthToken: "${ZPM_TOKEN}"

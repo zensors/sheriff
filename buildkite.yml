@@ -5,9 +5,9 @@ steps:
       - "mkdir -p /test"
       - "cp -R . /test"
       - "cd /test"
-      - "cp .yarnrc.ci.yml ~/.yarnrc.yml"
+      - "cp .yarnrc.internal.yml ~/.yarnrc.yml"
       - "echo '--- Installing Packages'"
-      - "yarn install"
+      - "yarn install --immutable"
       - "echo '+++ Running Tests'"
       - "yarn test"
     plugins:
@@ -23,13 +23,22 @@ steps:
       - "mkdir -p /build"
       - "cp -R . /build"
       - "cd /build"
-      - "cp .yarnrc.ci.yml ~/.yarnrc.yml"
+      - "cp .yarnrc.internal.yml ~/.yarnrc.yml"
       - "echo '--- Installing Packages'"
-      - "yarn install"
-      - "echo '+++ Publishing'"
+      - "yarn install --immutable"
+      - "echo '+++ Publishing Internally'"
+      - "yarn npm publish"
+      - "echo '+++ Publishing Externally'"
+      - "cp .yarnrc.external.yml ~/.yarnrc.yml"
       - "yarn npm publish"
     plugins:
       - docker#v3.7.0:
           image: "node:lts"
           propagate-environment: true
     if: build.branch == "master"
+
+  - label: ":github: Pushing to GitHub"
+    commands:
+      - "git remote add gh git@github.com:zensors/sheriff.git || true"
+      - "git push gh HEAD:${BUILDKITE_BRANCH}"
+    if: "build.branch !~ /^refs/"
