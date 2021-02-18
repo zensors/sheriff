@@ -25,7 +25,7 @@ export type Marshaller<T> =
 	| { kind: "any" }
 	| (unknown extends T ? { kind: "unknown" } : never)
 	| { kind: "custom", type: Marshaller<T>, fn: (data: T) => void }
-	| (T extends Record<string, infer U> ? Record<string, U> extends T ? { kind: "record", type: Marshaller<U> } : never : never)
+	| (string extends keyof T ? T extends Record<string, infer U> ? Record<string, U> extends T ? { kind: "record", type: Marshaller<U> } : never : never : never)
 	| (T extends (infer T1 & { __typeWitness: infer T2 }) ? (T1 & { __typeWitness: T2 }) extends T ?
 		{ kind: "witness", type: Marshaller<T1> } : never : never)
 	;
