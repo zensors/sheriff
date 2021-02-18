@@ -397,8 +397,13 @@ export namespace M {
 
 	/**
 	 * The object type `T` with all possibly-`undefined` fields marked as optional.
+	 *
+	 * Note: weird non-`never` check on RequiredKeys<T> is required due to a TS bug; see
+	 * https://github.com/microsoft/TypeScript/issues/42864
 	 */
-	type Optionalize<T> = { [K in RequiredKeys<T>]: T[K] } & { [K in NonRequiredKeys<T>]?: T[K] };
+	type Optionalize<T> =
+		(RequiredKeys<T> extends never ? {} : { [K in RequiredKeys<T>]: T[K] })
+			& { [K in NonRequiredKeys<T>]?: T[K] };
 
 	/**
 	 * Returns a marshaller for an object with the specified field types.  Excess fields will be considered marshal
