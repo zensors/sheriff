@@ -357,7 +357,7 @@ export namespace M {
 	 *
 	 * @param value - the value to match against
 	 */
-	export const lit = <T>(value: T): Marshaller<T> => ({ kind: "literal" as const, value });
+	export const lit = <T extends string | number | boolean | undefined | null>(value: T): Marshaller<T> => ({ kind: "literal" as const, value });
 
 	/**
 	 * A marshaller accepting all booleans.
