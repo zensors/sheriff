@@ -25,7 +25,7 @@ export type Marshaller<T> =
 	| { kind: "any" }
 	| (unknown extends T ? { kind: "unknown" } : never)
 	| { kind: "custom", type: Marshaller<T>, fn: (data: T) => void }
-	| (T extends Record<string, infer U> ? Record<string, U> extends T ? { kind: "record", type: Marshaller<U> } : never : never)
+	| (string extends keyof T ? T extends Record<string, infer U> ? Record<string, U> extends T ? { kind: "record", type: Marshaller<U> } : never : never : never)
 	| (T extends (infer T1 & { __typeWitness: infer T2 }) ? (T1 & { __typeWitness: T2 }) extends T ?
 		{ kind: "witness", type: Marshaller<T1> } : never : never)
 	;
@@ -397,8 +397,13 @@ export namespace M {
 
 	/**
 	 * The object type `T` with all possibly-`undefined` fields marked as optional.
+	 *
+	 * Note: weird non-`never` check on RequiredKeys<T> is required due to a TS bug; see
+	 * https://github.com/microsoft/TypeScript/issues/42864
 	 */
-	type Optionalize<T> = { [K in RequiredKeys<T>]: T[K] } & { [K in NonRequiredKeys<T>]?: T[K] };
+	type Optionalize<T> =
+		(RequiredKeys<T> extends never ? {} : { [K in RequiredKeys<T>]: T[K] })
+			& { [K in NonRequiredKeys<T>]?: T[K] };
 
 	/**
 	 * Returns a marshaller for an object with the specified field types.  Excess fields will be considered marshal
