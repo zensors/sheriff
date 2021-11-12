@@ -159,6 +159,7 @@ describe("@zensors/sheriff", () => {
 
 		describe("object case", () => {
 			const marshaller = M.obj({ foo: M.num, bar: M.str });
+			const nonStrictMarshaller = M.obj({ foo: M.num, bar: M.str }, false);
 
 			it("should reject booleans", () => {
 				expect(() => marshal(true as unknown, marshaller))
@@ -198,6 +199,10 @@ describe("@zensors/sheriff", () => {
 			it("should reject objects with excess fields", () => {
 				expect(() => marshal({ foo: 1, bar: "hi", baz: true } as unknown, marshaller))
 					.to.throw("[At INPUT]: Found unexpected key: baz");
+			});
+			
+			it("should accept objects with excess fields if non-strict", () => {
+				marshal({ foo: 1, bar: "hi", baz: true } as unknown, nonStrictMarshaller);
 			});
 
 			it("should accept objects matching the marshaller", () => {
