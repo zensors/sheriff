@@ -17,7 +17,7 @@ export type Marshaller<T> =
 	| (number extends T ? { kind: "number" } : never)
 	| (string extends T ? { kind: "string" } : never)
 	| (undefined extends T ? { kind: "optional", type: Marshaller<Exclude<T, undefined>> } : never)
-	| { kind: "object", fields: ObjectMarshaller<T> }
+	| { kind: "object", fields: ObjectMarshaller<T>, strict: boolean }
 	| (T extends (infer S)[] ? S[] extends T ? { kind: "array", type: Marshaller<S> } : never : never)
 	| (T extends any[] ? { kind: "tuple", fields: TupleMarshaller<T> } : never)
 	| { kind: "union", types: Marshaller<T>[] }
@@ -181,9 +181,11 @@ export function marshal<T extends X, X = unknown>(
 				marshal(obj[key], (description.fields as any)[key], name, path.concat([key]));
 			}
 
-			for (let key in obj) {
-				if (!(key in description.fields)) {
-					return assertHere(false, `Found unexpected key: ${key}`);
+			if (description.strict) {
+				for (let key in obj) {
+					if (!(key in description.fields)) {
+						return assertHere(false, `Found unexpected key: ${key}`);
+					}
 				}
 			}
 
@@ -407,14 +409,16 @@ export namespace M {
 
 	/**
 	 * Returns a marshaller for an object with the specified field types.  Excess fields will be considered marshal
-	 * errors.  Missing fields will be considered marshal errors unless their marshaller accepts `undefined`.  (It is
-	 * not possible to specify a field that must exist but which may take `undefined` as a value.)
+	 * errors by default.  Missing fields will be considered marshal errors unless their marshaller accepts `undefined`.
+	 * (It is not possible to specify a field that must exist but which may take `undefined` as a value.)
 	 *
 	 * @param fields - a mapping from fields names to marshallers that will be used to check those fields
+	 * @param strict - set strict to false to not error out on excess fields
 	 */
-	export const obj = <T>(fields: ObjectMarshaller<T>) => ({
+	export const obj = <T>(fields: ObjectMarshaller<T>, strict: boolean = true) => ({
 		kind: "object",
-		fields
+		fields,
+		strict
 	}) as Marshaller<Optionalize<T>>;
 
 	/**
