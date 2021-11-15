@@ -17,7 +17,7 @@ export type Marshaller<T> =
 	| (number extends T ? { kind: "number" } : never)
 	| (string extends T ? { kind: "string" } : never)
 	| (undefined extends T ? { kind: "optional", type: Marshaller<Exclude<T, undefined>> } : never)
-	| { kind: "object", fields: ObjectMarshaller<T>, strict: boolean }
+	| { kind: "object", fields: ObjectMarshaller<T>, strict?: boolean }
 	| (T extends (infer S)[] ? S[] extends T ? { kind: "array", type: Marshaller<S> } : never : never)
 	| (T extends any[] ? { kind: "tuple", fields: TupleMarshaller<T> } : never)
 	| { kind: "union", types: Marshaller<T>[] }
@@ -181,7 +181,7 @@ export function marshal<T extends X, X = unknown>(
 				marshal(obj[key], (description.fields as any)[key], name, path.concat([key]));
 			}
 
-			if (description.strict) {
+			if (description.strict === undefined || description.strict) {
 				for (let key in obj) {
 					if (!(key in description.fields)) {
 						return assertHere(false, `Found unexpected key: ${key}`);
